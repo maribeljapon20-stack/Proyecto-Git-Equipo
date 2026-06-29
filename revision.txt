@@ -1,1 +1,8 @@
 Prueba de revisión y Pull Request
+
+Revisión realizada:
+
+- Se encontró una advertencia en ManejadorGlobalExcepciones.java
+- Posible problema relacionado con seguridad de tipos y valores nulos
+- Se recomienda revisar la línea 22
+- El resto del código no presentó errores críticos
