@@ -1,63 +1,59 @@
 package com.biblioteca.Controlador;
 
-import com.biblioteca.Entidad.Usuario;
-import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-@Path("/usuarios")
+@Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class UsuarioResource {
-    
-    private static List<Usuario> usuarios = new ArrayList<>();
-    private static Long contadorId = 1L;
-    
+public class AuthResource {
+
     @POST
-    public Response crearUsuario(@Valid Usuario usuario) {
-        usuario.setId(contadorId++);
-        usuarios.add(usuario);
-        return Response.status(Response.Status.CREATED)
-                .entity(usuario)
-                .build();
-    }
-    
-    @GET
-    public List<Usuario> listarUsuarios() {
-        return usuarios;
-    }
-    
-    @GET
-    @Path("/{id}")
-    public Response obtenerUsuario(@PathParam("id") Long id) {
-        Usuario usuario = usuarios.stream()
-                .filter(u -> u.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+    @Path("/login")
+    public Response login(@QueryParam("usuario") String usuario, 
+                          @QueryParam("password") String password) {
         
-        if (usuario == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Usuario no encontrado con ID: " + id)
+        Map<String, String> respuesta = new HashMap<>();
+        
+        // Simulación de autenticación
+        if ("admin".equals(usuario) && "1234".equals(password)) {
+            respuesta.put("mensaje", "Login exitoso");
+            respuesta.put("token", "token-simulado-12345");
+            respuesta.put("usuario", usuario);
+            return Response.ok(respuesta).build();
+        } else {
+            respuesta.put("mensaje", "Credenciales incorrectas");
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(respuesta)
                     .build();
         }
-        
-        return Response.ok(usuario).build();
     }
-    
-    @DELETE
-    @Path("/{id}")
-    public Response eliminarUsuario(@PathParam("id") Long id) {
-        boolean eliminado = usuarios.removeIf(u -> u.getId().equals(id));
+
+    @POST
+    @Path("/logout")
+    public Response logout() {
+        Map<String, String> respuesta = new HashMap<>();
+        respuesta.put("mensaje", "Sesión cerrada exitosamente");
+        return Response.ok(respuesta).build();
+    }
+
+    @GET
+    @Path("/verificar")
+    public Response verificarToken(@HeaderParam("Authorization") String token) {
+        Map<String, String> respuesta = new HashMap<>();
         
-        if (!eliminado) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Usuario no encontrado con ID: " + id)
+        if (token != null && token.startsWith("Bearer ")) {
+            respuesta.put("mensaje", "Token válido");
+            respuesta.put("estado", "autenticado");
+            return Response.ok(respuesta).build();
+        } else {
+            respuesta.put("mensaje", "Token no proporcionado o inválido");
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(respuesta)
                     .build();
         }
-        
-        return Response.noContent().build();
     }
 }
