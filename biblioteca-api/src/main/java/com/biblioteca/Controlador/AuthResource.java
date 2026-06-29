@@ -1,42 +1,63 @@
 package com.biblioteca.Controlador;
 
 import com.biblioteca.Entidad.Usuario;
-import com.biblioteca.Seguridad.LoginRequest;
-import com.biblioteca.Seguridad.TokenResponse;
-import com.biblioteca.Servicio.UsuarioServicio;
-import io.smallrye.jwt.build.Jwt;
-import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
-@Path("/auth")
+@Path("/usuarios")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class AuthResource {
+public class UsuarioResource {
     
-    @Inject
-    UsuarioServicio usuarioServicio;
+    private static List<Usuario> usuarios = new ArrayList<>();
+    private static Long contadorId = 1L;
     
     @POST
-    @Path("/login")
-    public Response login(LoginRequest request) {
-        Usuario usuario = usuarioServicio.autenticar(request.cedula, request.password);
+    public Response crearUsuario(@Valid Usuario usuario) {
+        usuario.setId(contadorId++);
+        usuarios.add(usuario);
+        return Response.status(Response.Status.CREATED)
+                .entity(usuario)
+                .build();
+    }
+    
+    @GET
+    public List<Usuario> listarUsuarios() {
+        return usuarios;
+    }
+    
+    @GET
+    @Path("/{id}")
+    public Response obtenerUsuario(@PathParam("id") Long id) {
+        Usuario usuario = usuarios.stream()
+                .filter(u -> u.getId().equals(id))
+                .findFirst()
+                .orElse(null);
         
         if (usuario == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("Credenciales inválidas")
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Usuario no encontrado con ID: " + id)
                     .build();
         }
         
-        // ✅ CORRECTO: Sin punto y coma hasta el final
-        String token = Jwt.issuer("biblioteca-api")
-                .upn(usuario.cedula)
-                .groups(Set.of("USER"))
-                .expiresIn(3600)
-                .sign();
+        return Response.ok(usuario).build();
+    }
+    
+    @DELETE
+    @Path("/{id}")
+    public Response eliminarUsuario(@PathParam("id") Long id) {
+        boolean eliminado = usuarios.removeIf(u -> u.getId().equals(id));
         
-        return Response.ok(new TokenResponse(token)).build();
+        if (!eliminado) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Usuario no encontrado con ID: " + id)
+                    .build();
+        }
+        
+        return Response.noContent().build();
     }
 }
