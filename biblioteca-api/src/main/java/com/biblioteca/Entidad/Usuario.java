@@ -13,7 +13,7 @@ public class Usuario {
     private String nombre;
     
     @NotBlank(message = "El email es obligatorio")
-    @Email(message = "El email debe tener formato válido")
+    @Email(message = "El email debe tener formato sea válido")
     private String email;
     
     // Constructor vacío
